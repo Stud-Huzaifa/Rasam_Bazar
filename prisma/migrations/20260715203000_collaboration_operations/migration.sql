@@ -5,13 +5,24 @@ CREATE TYPE "VendorOperationStatus" AS ENUM ('SCHEDULED', 'ON_THE_WAY', 'ARRIVED
 ALTER TYPE "MessageThreadType" ADD VALUE IF NOT EXISTS 'PROPOSAL';
 ALTER TYPE "MessageThreadType" ADD VALUE IF NOT EXISTS 'DISPUTE';
 
-ALTER TABLE "Guest"
-  ADD COLUMN "side" "GuestSide" NOT NULL DEFAULT 'SHARED',
-  ADD COLUMN "groupName" TEXT,
-  ADD COLUMN "adults" INTEGER NOT NULL DEFAULT 1,
-  ADD COLUMN "children" INTEGER NOT NULL DEFAULT 0,
-  ADD COLUMN "additionalEstimate" INTEGER NOT NULL DEFAULT 0,
-  ADD COLUMN "dietaryNotes" TEXT;
+CREATE TABLE "Guest" (
+    "id" TEXT NOT NULL,
+    "weddingId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "relation" TEXT,
+    "phone" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "side" "GuestSide" NOT NULL DEFAULT 'SHARED',
+    "groupName" TEXT,
+    "adults" INTEGER NOT NULL DEFAULT 1,
+    "children" INTEGER NOT NULL DEFAULT 0,
+    "additionalEstimate" INTEGER NOT NULL DEFAULT 0,
+    "dietaryNotes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Guest_pkey" PRIMARY KEY ("id")
+);
 
 CREATE TABLE "GuestEventInvitation" (
     "id" TEXT NOT NULL,
@@ -62,6 +73,7 @@ CREATE INDEX "MessageThread_serviceRequestId_idx" ON "MessageThread"("serviceReq
 CREATE INDEX "BookingOperationStatus_bookingId_occurredAt_idx" ON "BookingOperationStatus"("bookingId", "occurredAt");
 CREATE INDEX "BookingOperationStatus_status_idx" ON "BookingOperationStatus"("status");
 
+ALTER TABLE "Guest" ADD CONSTRAINT "Guest_weddingId_fkey" FOREIGN KEY ("weddingId") REFERENCES "Wedding"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "GuestEventInvitation" ADD CONSTRAINT "GuestEventInvitation_guestId_fkey" FOREIGN KEY ("guestId") REFERENCES "Guest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "GuestEventInvitation" ADD CONSTRAINT "GuestEventInvitation_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "WeddingEvent"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "MessageThread" ADD CONSTRAINT "MessageThread_proposalId_fkey" FOREIGN KEY ("proposalId") REFERENCES "Proposal"("id") ON DELETE SET NULL ON UPDATE CASCADE;
