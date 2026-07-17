@@ -1,0 +1,1381 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRoleName {
+  CUSTOMER
+  WEDDING_OWNER
+  FAMILY_MEMBER
+  VENDOR_OWNER
+  VENDOR_STAFF
+  SUPPORT_OFFICER
+  ADMIN
+}
+
+enum VerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  MORE_INFORMATION_REQUIRED
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VerificationLevel {
+  UNVERIFIED
+  PHONE_VERIFIED
+  IDENTITY_VERIFIED
+  BUSINESS_VERIFIED
+  PLATFORM_TRUSTED
+}
+
+enum PricingModel {
+  FIXED
+  PER_EVENT
+  PER_HOUR
+  PER_GUEST
+  STARTING_FROM
+  CUSTOM_QUOTE
+}
+
+enum VendorAvailabilityStatus {
+  AVAILABLE
+  TENTATIVELY_RESERVED
+  BOOKED
+  UNAVAILABLE
+  PARTIALLY_AVAILABLE
+}
+
+enum VendorInquiryStatus {
+  NEW
+  RESPONDED
+  CLOSED
+}
+
+enum ServiceRequestStatus {
+  DRAFT
+  PUBLISHED
+  RECEIVING_PROPOSALS
+  SHORTLISTING
+  AWARDED
+  CLOSED
+  CANCELLED
+}
+
+enum ServiceRequestVisibility {
+  PUBLIC_TO_MATCHING_VENDORS
+  INVITE_ONLY
+  PRIVATE
+}
+
+enum ServiceRequestInvitationStatus {
+  INVITED
+  VIEWED
+  DECLINED
+  RESPONDED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  VIEWED
+  SHORTLISTED
+  REVISION_REQUESTED
+  REVISED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum BookingStatus {
+  PENDING_AGREEMENT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentMilestoneStatus {
+  PENDING
+  DUE
+  PAID
+  OVERDUE
+  WAIVED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  EASYPAISA
+  JAZZCASH
+  SIMULATED_CARD
+  OTHER
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+  FLAGGED
+  REMOVED
+}
+
+enum ReviewVisibility {
+  PUBLIC
+  PRIVATE_TO_VENDOR
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CANCELLED
+}
+
+enum IncidentStatus {
+  OPEN
+  VENDOR_RESPONDED
+  RESOLVED
+  ESCALATED
+  CANCELLED
+}
+
+enum TrustSignalType {
+  REVIEW_SCORE
+  COMPLETED_BOOKINGS
+  VERIFICATION
+  DISPUTE_RATE
+  PROFILE_COMPLETENESS
+}
+
+enum NotificationType {
+  GENERAL
+  TASK_REMINDER
+  PROPOSAL_UPDATE
+  BOOKING_UPDATE
+  PAYMENT_UPDATE
+  REVIEW_UPDATE
+  MESSAGE
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageThreadType {
+  GENERAL
+  BOOKING
+  PROPOSAL
+  DISPUTE
+  SERVICE_REQUEST
+  SUPPORT
+}
+
+enum GuestSide {
+  BRIDE
+  GROOM
+  SHARED
+}
+
+enum GuestRsvpStatus {
+  PENDING
+  INVITED
+  ACCEPTED
+  DECLINED
+  MAYBE
+}
+
+enum VendorOperationStatus {
+  SCHEDULED
+  ON_THE_WAY
+  ARRIVED
+  SETTING_UP
+  READY
+  ACTIVE_SERVICE
+  COMPLETED
+  DELAYED
+}
+
+enum ActivityEventType {
+  GENERAL
+  WEDDING
+  TASK
+  SERVICE_REQUEST
+  PROPOSAL
+  BOOKING
+  PAYMENT
+  REVIEW
+  MESSAGE
+}
+
+enum VerificationDocumentType {
+  CNIC
+  ADDRESS_PROOF
+  BUSINESS_REGISTRATION
+  BANK_ACCOUNT
+  PORTFOLIO
+  CLIENT_REFERENCE
+  OTHER
+}
+
+enum WeddingStatus {
+  DRAFT
+  PLANNING
+  BOOKING_VENDORS
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum FamilyPlanningRole {
+  WEDDING_OWNER
+  BUDGET_MANAGER
+  VENDOR_COORDINATOR
+  GUEST_MANAGER
+  CATERING_COORDINATOR
+  SHOPPING_COORDINATOR
+  TRANSPORT_COORDINATOR
+  EVENT_DAY_COORDINATOR
+  VIEWER
+}
+
+enum MemberInviteStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+  REMOVED
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  AWAITING_INFORMATION
+  AWAITING_APPROVAL
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ApprovalStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReminderStatus {
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+enum TaskBlockerStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        UserRoleName @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  userRoles   UserRole[]
+}
+
+model User {
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  passwordHash            String
+  fullName                String?
+  phone                   String?
+  city                    String?
+  isEmailVerified         Boolean                  @default(false)
+  isActive                Boolean                  @default(true)
+  isSuspended             Boolean                  @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  deletedAt               DateTime?
+  profile                 UserProfile?
+  roles                   UserRole[]
+  refreshTokens           RefreshToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  weddings                Wedding[]
+  weddingMemberships      WeddingMember[]
+  assignedTasks           WeddingTask[]
+  taskAssignments         TaskAssignment[]
+  taskComments            TaskComment[]
+  taskEvidence            TaskEvidence[]
+  taskApprovals           TaskApproval[]           @relation("TaskApprovalReviewer")
+  vendor                  Vendor?
+  vendorInquiries         VendorInquiry[]
+  auditLogs               AuditLog[]
+  serviceRequests         ServiceRequest[]
+  bookings                Booking[]
+  vendorReviews           VendorReview[]
+  bookingDisputes         BookingDispute[]         @relation("DisputeOpenedBy")
+  openedIncidents         BookingIncident[]        @relation("IncidentOpenedBy")
+  notifications           Notification[]           @relation("UserNotifications")
+  triggeredNotifications  Notification[]           @relation("NotificationActor")
+  customerMessageThreads  MessageThread[]          @relation("CustomerMessageThreads")
+  sentMessages            Message[]
+  activityEvents          ActivityEvent[]          @relation("ActivityActor")
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  bio       String?
+  avatarUrl String?
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleId])
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model Wedding {
+  id                  String           @id @default(cuid())
+  title               String
+  brideName           String?
+  groomName           String?
+  city                String?
+  estimatedBudget     Decimal?         @db.Decimal(12, 2)
+  estimatedGuestCount Int?
+  startDate           DateTime?
+  endDate             DateTime?
+  mainCoordinator     String?
+  notes               String?
+  status              WeddingStatus    @default(DRAFT)
+  ownerId             String
+  owner               User             @relation(fields: [ownerId], references: [id])
+  events              WeddingEvent[]
+  members             WeddingMember[]
+  plan                WeddingPlan?
+  budgetItems         BudgetItem[]
+  tasks               WeddingTask[]
+  guests              Guest[]
+  serviceRequests     ServiceRequest[]
+  bookings            Booking[]
+  messageThreads      MessageThread[]
+  activityEvents      ActivityEvent[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model WeddingMember {
+  id         String             @id @default(cuid())
+  weddingId  String
+  userId     String?
+  email      String
+  fullName   String?
+  role       FamilyPlanningRole @default(VIEWER)
+  status     MemberInviteStatus @default(INVITED)
+  invitedAt  DateTime           @default(now())
+  acceptedAt DateTime?
+  removedAt  DateTime?
+  wedding    Wedding            @relation(fields: [weddingId], references: [id])
+  user       User?              @relation(fields: [userId], references: [id])
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([weddingId, email])
+  @@index([weddingId, role])
+}
+
+model WeddingEvent {
+  id                  String                 @id @default(cuid())
+  weddingId           String
+  name                String
+  eventType           String
+  date                DateTime?
+  startTime           String?
+  endTime             String?
+  venue               String?
+  city                String?
+  guestCount          Int?
+  eventBudget         Decimal?               @db.Decimal(12, 2)
+  dressCode           String?
+  notes               String?
+  assignedCoordinator String?
+  wedding             Wedding                @relation(fields: [weddingId], references: [id])
+  tasks               WeddingTask[]
+  serviceRequests     ServiceRequest[]
+  bookings            Booking[]
+  bookingEvents       BookingEvent[]
+  guestInvitations    GuestEventInvitation[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+}
+
+model PlanningTemplate {
+  id            String          @id @default(cuid())
+  name          String
+  description   String?
+  city          String?
+  isActive      Boolean         @default(true)
+  phases        PlanningPhase[]
+  taskTemplates TaskTemplate[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model PlanningPhase {
+  id            String            @id @default(cuid())
+  templateId    String?
+  name          String
+  description   String?
+  sortOrder     Int               @default(0)
+  template      PlanningTemplate? @relation(fields: [templateId], references: [id])
+  taskTemplates TaskTemplate[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model TaskTemplate {
+  id                      String              @id @default(cuid())
+  templateId              String?
+  phaseId                 String?
+  title                   String
+  description             String?
+  whyImportant            String?
+  instructions            String[]            @default([])
+  category                String
+  offsetDaysBeforeWedding Int                 @default(30)
+  priority                TaskPriority        @default(MEDIUM)
+  assignedRole            FamilyPlanningRole?
+  requiredEvidence        String[]            @default([])
+  completionCriteria      String?
+  requiresApproval        Boolean             @default(false)
+  template                PlanningTemplate?   @relation(fields: [templateId], references: [id])
+  phase                   PlanningPhase?      @relation(fields: [phaseId], references: [id])
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+}
+
+model WeddingPlan {
+  id          String   @id @default(cuid())
+  weddingId   String   @unique
+  generatedAt DateTime @default(now())
+  status      String   @default("ACTIVE")
+  summary     Json?
+  wedding     Wedding  @relation(fields: [weddingId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BudgetItem {
+  id              String           @id @default(cuid())
+  weddingId       String
+  title           String
+  category        String?
+  amount          Decimal?         @db.Decimal(12, 2)
+  dueDate         DateTime?
+  isPaid          Boolean          @default(false)
+  notes           String?
+  wedding         Wedding          @relation(fields: [weddingId], references: [id])
+  bookingPayments BookingPayment[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model WeddingTask {
+  id                 String              @id @default(cuid())
+  weddingId          String
+  eventId            String?
+  title              String
+  description        String?
+  whyImportant       String?
+  instructions       String[]            @default([])
+  category           String?
+  assignedUserId     String?
+  assignedRole       FamilyPlanningRole?
+  assignee           String?
+  startDate          DateTime?
+  dueDate            DateTime?
+  priority           TaskPriority        @default(MEDIUM)
+  status             TaskStatus          @default(NOT_STARTED)
+  requiredEvidence   String[]            @default([])
+  completionCriteria String?
+  requiresApproval   Boolean             @default(false)
+  approvalStatus     ApprovalStatus      @default(NOT_REQUIRED)
+  relatedVendorId    String?
+  isCompleted        Boolean             @default(false)
+  wedding            Wedding             @relation(fields: [weddingId], references: [id])
+  event              WeddingEvent?       @relation(fields: [eventId], references: [id])
+  assignedUser       User?               @relation(fields: [assignedUserId], references: [id])
+  steps              TaskStep[]
+  assignments        TaskAssignment[]
+  evidence           TaskEvidence[]
+  comments           TaskComment[]
+  approvals          TaskApproval[]
+  reminders          TaskReminder[]
+  blockers           TaskBlocker[]
+  statusHistory      TaskStatusHistory[]
+  dependencies       TaskDependency[]    @relation("TaskDependencies")
+  dependentTasks     TaskDependency[]    @relation("DependentTasks")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([weddingId, status])
+  @@index([weddingId, dueDate])
+  @@index([assignedUserId])
+}
+
+model TaskStep {
+  id        String      @id @default(cuid())
+  taskId    String
+  title     String
+  sortOrder Int         @default(0)
+  isDone    Boolean     @default(false)
+  task      WeddingTask @relation(fields: [taskId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model TaskDependency {
+  id              String      @id @default(cuid())
+  taskId          String
+  dependsOnTaskId String
+  task            WeddingTask @relation("DependentTasks", fields: [taskId], references: [id])
+  dependsOnTask   WeddingTask @relation("TaskDependencies", fields: [dependsOnTaskId], references: [id])
+  createdAt       DateTime    @default(now())
+
+  @@unique([taskId, dependsOnTaskId])
+}
+
+model TaskAssignment {
+  id           String              @id @default(cuid())
+  taskId       String
+  userId       String?
+  role         FamilyPlanningRole?
+  assigneeName String?
+  assignedAt   DateTime            @default(now())
+  task         WeddingTask         @relation(fields: [taskId], references: [id])
+  user         User?               @relation(fields: [userId], references: [id])
+}
+
+model TaskEvidence {
+  id           String      @id @default(cuid())
+  taskId       String
+  uploadedById String?
+  title        String
+  fileUrl      String?
+  fileType     String?
+  notes        String?
+  task         WeddingTask @relation(fields: [taskId], references: [id])
+  uploadedBy   User?       @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime    @default(now())
+}
+
+model TaskComment {
+  id        String      @id @default(cuid())
+  taskId    String
+  authorId  String?
+  comment   String
+  task      WeddingTask @relation(fields: [taskId], references: [id])
+  author    User?       @relation(fields: [authorId], references: [id])
+  createdAt DateTime    @default(now())
+}
+
+model TaskApproval {
+  id         String         @id @default(cuid())
+  taskId     String
+  reviewerId String?
+  status     ApprovalStatus @default(PENDING)
+  comment    String?
+  decidedAt  DateTime?
+  task       WeddingTask    @relation(fields: [taskId], references: [id])
+  reviewer   User?          @relation("TaskApprovalReviewer", fields: [reviewerId], references: [id])
+  createdAt  DateTime       @default(now())
+}
+
+model TaskReminder {
+  id        String         @id @default(cuid())
+  taskId    String
+  remindAt  DateTime
+  status    ReminderStatus @default(SCHEDULED)
+  task      WeddingTask    @relation(fields: [taskId], references: [id])
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model TaskBlocker {
+  id                     String            @id @default(cuid())
+  taskId                 String
+  blockerType            String
+  reason                 String
+  description            String?
+  responsiblePerson      String?
+  expectedResolutionDate DateTime?
+  status                 TaskBlockerStatus @default(OPEN)
+  task                   WeddingTask       @relation(fields: [taskId], references: [id])
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+}
+
+model TaskStatusHistory {
+  id          String      @id @default(cuid())
+  taskId      String
+  fromStatus  TaskStatus?
+  toStatus    TaskStatus
+  changedById String?
+  note        String?
+  task        WeddingTask @relation(fields: [taskId], references: [id])
+  createdAt   DateTime    @default(now())
+}
+
+model Guest {
+  id                 String                 @id @default(cuid())
+  weddingId          String
+  name               String
+  relation           String?
+  phone              String?
+  status             String                 @default("PENDING")
+  side               GuestSide              @default(SHARED)
+  groupName          String?
+  adults             Int                    @default(1)
+  children           Int                    @default(0)
+  additionalEstimate Int                    @default(0)
+  dietaryNotes       String?
+  wedding            Wedding                @relation(fields: [weddingId], references: [id])
+  eventInvitations   GuestEventInvitation[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([weddingId, side])
+  @@index([weddingId, groupName])
+}
+
+model GuestEventInvitation {
+  id          String          @id @default(cuid())
+  guestId     String
+  eventId     String
+  rsvpStatus  GuestRsvpStatus @default(PENDING)
+  invitedAt   DateTime?
+  respondedAt DateTime?
+  notes       String?
+  guest       Guest           @relation(fields: [guestId], references: [id])
+  event       WeddingEvent    @relation(fields: [eventId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([guestId, eventId])
+  @@index([eventId, rsvpStatus])
+}
+
+model Vendor {
+  id                        String                     @id @default(cuid())
+  userId                    String                     @unique
+  businessName              String
+  ownerName                 String
+  description               String?
+  phone                     String?
+  email                     String?
+  address                   String?
+  city                      String?
+  serviceAreas              String[]
+  yearsOfExperience         Int?
+  teamSize                  Int?
+  startingPrice             Decimal?                   @db.Decimal(12, 2)
+  verificationStatus        VerificationStatus         @default(NOT_SUBMITTED)
+  verificationLevel         VerificationLevel          @default(UNVERIFIED)
+  isActive                  Boolean                    @default(true)
+  user                      User                       @relation(fields: [userId], references: [id])
+  verifications             VendorVerification[]
+  portfolio                 VendorPortfolio[]
+  services                  ServiceListing[]
+  packages                  ServicePackage[]
+  teams                     VendorTeam[]
+  availability              VendorAvailability[]
+  inquiries                 VendorInquiry[]
+  serviceRequestInvitations ServiceRequestInvitation[]
+  serviceRequestMatches     ServiceRequestMatch[]
+  proposals                 Proposal[]
+  bookings                  Booking[]
+  reviews                   VendorReview[]
+  disputes                  BookingDispute[]
+  incidents                 BookingIncident[]
+  trustSignals              VendorTrustSignal[]
+  messageThreads            MessageThread[]
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+}
+
+model ServiceCategory {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  description     String?
+  slug            String           @unique
+  services        ServiceListing[]
+  serviceRequests ServiceRequest[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model VendorVerification {
+  id            String                   @id @default(cuid())
+  vendorId      String
+  documentType  VerificationDocumentType
+  documentUrl   String?
+  notes         String?
+  status        VerificationStatus       @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewComment String?
+  vendor        Vendor                   @relation(fields: [vendorId], references: [id])
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@index([vendorId, status])
+}
+
+model VendorPortfolio {
+  id          String   @id @default(cuid())
+  vendorId    String
+  title       String
+  imageUrl    String
+  description String?
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([vendorId, isFeatured])
+}
+
+model VendorTeam {
+  id           String               @id @default(cuid())
+  vendorId     String
+  name         String
+  description  String?
+  capacity     Int                  @default(1)
+  isActive     Boolean              @default(true)
+  vendor       Vendor               @relation(fields: [vendorId], references: [id])
+  availability VendorAvailability[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model ServiceListing {
+  id                 String           @id @default(cuid())
+  vendorId           String
+  categoryId         String?
+  title              String
+  description        String?
+  pricingModel       PricingModel     @default(STARTING_FROM)
+  startingPrice      Decimal?         @db.Decimal(12, 2)
+  serviceAreas       String[]         @default([])
+  capacity           Int?
+  inclusions         String[]         @default([])
+  exclusions         String[]         @default([])
+  addOns             String[]         @default([])
+  leadTimeDays       Int?
+  cancellationPolicy String?
+  isActive           Boolean          @default(true)
+  vendor             Vendor           @relation(fields: [vendorId], references: [id])
+  category           ServiceCategory? @relation(fields: [categoryId], references: [id])
+  packages           ServicePackage[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([vendorId, isActive])
+  @@index([categoryId])
+}
+
+model ServicePackage {
+  id               String          @id @default(cuid())
+  vendorId         String
+  serviceId        String?
+  name             String
+  description      String?
+  price            Decimal?        @db.Decimal(12, 2)
+  includedItems    String[]        @default([])
+  excludedItems    String[]        @default([])
+  addOns           String[]        @default([])
+  eventCoverage    String?
+  teamSize         Int?
+  deliveryTimeline String?
+  isActive         Boolean         @default(true)
+  vendor           Vendor          @relation(fields: [vendorId], references: [id])
+  service          ServiceListing? @relation(fields: [serviceId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([vendorId, isActive])
+  @@index([serviceId])
+}
+
+model VendorAvailability {
+  id        String                   @id @default(cuid())
+  vendorId  String
+  teamId    String?
+  date      DateTime
+  startTime String?
+  endTime   String?
+  capacity  Int                      @default(1)
+  status    VendorAvailabilityStatus @default(AVAILABLE)
+  notes     String?
+  vendor    Vendor                   @relation(fields: [vendorId], references: [id])
+  team      VendorTeam?              @relation(fields: [teamId], references: [id])
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  @@index([vendorId, date, status])
+  @@index([teamId, date])
+}
+
+model VendorInquiry {
+  id         String              @id @default(cuid())
+  vendorId   String
+  customerId String?
+  weddingId  String?
+  name       String
+  email      String
+  phone      String?
+  city       String?
+  eventDate  DateTime?
+  guestCount Int?
+  message    String
+  status     VendorInquiryStatus @default(NEW)
+  vendor     Vendor              @relation(fields: [vendorId], references: [id])
+  customer   User?               @relation(fields: [customerId], references: [id])
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([vendorId, status])
+  @@index([customerId])
+}
+
+model ServiceRequest {
+  id               String                     @id @default(cuid())
+  customerId       String
+  weddingId        String
+  eventId          String?
+  categoryId       String?
+  title            String
+  city             String?
+  venue            String?
+  eventDate        DateTime?
+  startTime        String?
+  guestCount       Int?
+  minBudget        Decimal?                   @db.Decimal(12, 2)
+  maxBudget        Decimal?                   @db.Decimal(12, 2)
+  description      String
+  deliverables     String[]                   @default([])
+  attachments      String[]                   @default([])
+  proposalDeadline DateTime?
+  visibility       ServiceRequestVisibility   @default(PUBLIC_TO_MATCHING_VENDORS)
+  status           ServiceRequestStatus       @default(DRAFT)
+  customer         User                       @relation(fields: [customerId], references: [id])
+  wedding          Wedding                    @relation(fields: [weddingId], references: [id])
+  event            WeddingEvent?              @relation(fields: [eventId], references: [id])
+  category         ServiceCategory?           @relation(fields: [categoryId], references: [id])
+  invitations      ServiceRequestInvitation[]
+  matches          ServiceRequestMatch[]
+  proposals        Proposal[]
+  booking          Booking?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  @@index([weddingId, status])
+  @@index([categoryId, city])
+  @@index([status, visibility])
+}
+
+model ServiceRequestInvitation {
+  id               String                         @id @default(cuid())
+  serviceRequestId String
+  vendorId         String
+  status           ServiceRequestInvitationStatus @default(INVITED)
+  note             String?
+  createdAt        DateTime                       @default(now())
+  updatedAt        DateTime                       @updatedAt
+  serviceRequest   ServiceRequest                 @relation(fields: [serviceRequestId], references: [id])
+  vendor           Vendor                         @relation(fields: [vendorId], references: [id])
+
+  @@unique([serviceRequestId, vendorId])
+  @@index([vendorId, status])
+}
+
+model ServiceRequestMatch {
+  id               String         @id @default(cuid())
+  serviceRequestId String
+  vendorId         String
+  score            Int
+  reasons          String[]       @default([])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id])
+  vendor           Vendor         @relation(fields: [vendorId], references: [id])
+
+  @@unique([serviceRequestId, vendorId])
+  @@index([vendorId, score])
+}
+
+model Proposal {
+  id               String            @id @default(cuid())
+  serviceRequestId String
+  vendorId         String
+  status           ProposalStatus    @default(DRAFT)
+  latestVersionId  String?
+  customerNote     String?
+  shortlistedAt    DateTime?
+  acceptedAt       DateTime?
+  rejectedAt       DateTime?
+  withdrawnAt      DateTime?
+  serviceRequest   ServiceRequest    @relation(fields: [serviceRequestId], references: [id])
+  vendor           Vendor            @relation(fields: [vendorId], references: [id])
+  versions         ProposalVersion[]
+  comments         ProposalComment[]
+  booking          Booking?
+  messageThreads   MessageThread[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([serviceRequestId, vendorId])
+  @@index([vendorId, status])
+  @@index([serviceRequestId, status])
+}
+
+model ProposalVersion {
+  id                 String    @id @default(cuid())
+  proposalId         String
+  versionNumber      Int
+  previousVersionId  String?
+  totalPrice         Decimal   @db.Decimal(12, 2)
+  currency           String    @default("PKR")
+  packageDescription String?
+  inclusions         String[]  @default([])
+  exclusions         String[]  @default([])
+  addOns             String[]  @default([])
+  teamSize           Int?
+  setupTime          String?
+  deliveryTime       String?
+  advanceAmount      Decimal?  @db.Decimal(12, 2)
+  paymentSchedule    String?
+  cancellationPolicy String?
+  validityDate       DateTime?
+  terms              String?
+  changeSummary      String?
+  attachments        String[]  @default([])
+  proposal           Proposal  @relation(fields: [proposalId], references: [id])
+  acceptedBookings   Booking[] @relation("AcceptedProposalVersion")
+  createdAt          DateTime  @default(now())
+
+  @@unique([proposalId, versionNumber])
+  @@index([proposalId])
+}
+
+model ProposalComment {
+  id         String   @id @default(cuid())
+  proposalId String
+  authorId   String?
+  authorRole String?
+  comment    String
+  proposal   Proposal @relation(fields: [proposalId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([proposalId])
+}
+
+model Booking {
+  id                        String                   @id @default(cuid())
+  proposalId                String                   @unique
+  acceptedProposalVersionId String?
+  serviceRequestId          String                   @unique
+  weddingId                 String
+  eventId                   String?
+  customerId                String
+  vendorId                  String
+  title                     String
+  status                    BookingStatus            @default(PENDING_AGREEMENT)
+  totalAmount               Decimal                  @db.Decimal(12, 2)
+  currency                  String                   @default("PKR")
+  agreementText             String?
+  agreementVersion          Int                      @default(1)
+  lockedProposalSnapshot    Json?
+  budgetWarnings            String[]                 @default([])
+  agreedAt                  DateTime?
+  customerConfirmedAt       DateTime?
+  vendorConfirmedAt         DateTime?
+  startsAt                  DateTime?
+  endsAt                    DateTime?
+  cancellationReason        String?
+  proposal                  Proposal                 @relation(fields: [proposalId], references: [id])
+  acceptedProposalVersion   ProposalVersion?         @relation("AcceptedProposalVersion", fields: [acceptedProposalVersionId], references: [id])
+  serviceRequest            ServiceRequest           @relation(fields: [serviceRequestId], references: [id])
+  wedding                   Wedding                  @relation(fields: [weddingId], references: [id])
+  event                     WeddingEvent?            @relation(fields: [eventId], references: [id])
+  events                    BookingEvent[]
+  operationStatuses         BookingOperationStatus[]
+  customer                  User                     @relation(fields: [customerId], references: [id])
+  vendor                    Vendor                   @relation(fields: [vendorId], references: [id])
+  payments                  BookingPayment[]
+  review                    VendorReview?
+  disputes                  BookingDispute[]
+  incidents                 BookingIncident[]
+  messageThreads            MessageThread[]
+  activityEvents            ActivityEvent[]
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+
+  @@index([customerId, status])
+  @@index([vendorId, status])
+  @@index([weddingId, status])
+  @@index([acceptedProposalVersionId])
+}
+
+model BookingPayment {
+  id               String                 @id @default(cuid())
+  bookingId        String
+  budgetItemId     String?
+  title            String
+  amount           Decimal                @db.Decimal(12, 2)
+  dueDate          DateTime?
+  status           PaymentMilestoneStatus @default(PENDING)
+  method           PaymentMethod?
+  reference        String?
+  receiptUrl       String?
+  paidAt           DateTime?
+  verifiedAt       DateTime?
+  verifiedById     String?
+  verificationNote String?
+  notes            String?
+  booking          Booking                @relation(fields: [bookingId], references: [id])
+  budgetItem       BudgetItem?            @relation(fields: [budgetItemId], references: [id])
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([bookingId, status])
+  @@index([budgetItemId])
+}
+
+model BookingEvent {
+  id        String       @id @default(cuid())
+  bookingId String
+  eventId   String
+  booking   Booking      @relation(fields: [bookingId], references: [id])
+  event     WeddingEvent @relation(fields: [eventId], references: [id])
+  createdAt DateTime     @default(now())
+
+  @@unique([bookingId, eventId])
+  @@index([eventId])
+}
+
+model VendorReview {
+  id                    String           @id @default(cuid())
+  bookingId             String           @unique
+  vendorId              String
+  customerId            String
+  rating                Int
+  communicationRating   Int?
+  qualityRating         Int?
+  valueRating           Int?
+  professionalismRating Int?
+  title                 String?
+  comment               String?
+  wouldRecommend        Boolean          @default(true)
+  tags                  String[]         @default([])
+  status                ReviewStatus     @default(PUBLISHED)
+  visibility            ReviewVisibility @default(PUBLIC)
+  vendorResponse        String?
+  vendorRespondedAt     DateTime?
+  booking               Booking          @relation(fields: [bookingId], references: [id])
+  vendor                Vendor           @relation(fields: [vendorId], references: [id])
+  customer              User             @relation(fields: [customerId], references: [id])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@index([vendorId, status])
+  @@index([customerId])
+}
+
+model BookingDispute {
+  id             String            @id @default(cuid())
+  bookingId      String
+  vendorId       String
+  customerId     String
+  openedById     String?
+  reason         String
+  details        String?
+  evidenceUrls   String[]          @default([])
+  vendorResponse String?
+  supportNote    String?
+  adminDecision  String?
+  reviewedById   String?
+  decidedById    String?
+  status         DisputeStatus     @default(OPEN)
+  resolutionNote String?
+  resolvedAt     DateTime?
+  booking        Booking           @relation(fields: [bookingId], references: [id])
+  vendor         Vendor            @relation(fields: [vendorId], references: [id])
+  openedBy       User?             @relation("DisputeOpenedBy", fields: [openedById], references: [id])
+  messageThreads MessageThread[]
+  evidence       DisputeEvidence[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([bookingId, status])
+  @@index([vendorId, status])
+  @@index([customerId, status])
+}
+
+model DisputeEvidence {
+  id           String         @id @default(cuid())
+  disputeId    String
+  uploadedById String?
+  fileUrl      String
+  note         String?
+  dispute      BookingDispute @relation(fields: [disputeId], references: [id])
+  createdAt    DateTime       @default(now())
+
+  @@index([disputeId])
+}
+
+model BookingIncident {
+  id                 String             @id @default(cuid())
+  bookingId          String
+  vendorId           String
+  customerId         String
+  openedById         String?
+  title              String
+  description        String?
+  severity           String             @default("MEDIUM")
+  status             IncidentStatus     @default(OPEN)
+  vendorResponse     String?
+  resolutionNote     String?
+  escalatedDisputeId String?
+  resolvedAt         DateTime?
+  booking            Booking            @relation(fields: [bookingId], references: [id])
+  vendor             Vendor             @relation(fields: [vendorId], references: [id])
+  openedBy           User?              @relation("IncidentOpenedBy", fields: [openedById], references: [id])
+  evidence           IncidentEvidence[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([bookingId, status])
+  @@index([vendorId, status])
+  @@index([customerId, status])
+}
+
+model IncidentEvidence {
+  id           String          @id @default(cuid())
+  incidentId   String
+  uploadedById String?
+  fileUrl      String
+  note         String?
+  incident     BookingIncident @relation(fields: [incidentId], references: [id])
+  createdAt    DateTime        @default(now())
+
+  @@index([incidentId])
+}
+
+model VendorTrustSignal {
+  id          String          @id @default(cuid())
+  vendorId    String
+  type        TrustSignalType
+  label       String
+  score       Int
+  weight      Int             @default(1)
+  source      String?
+  details     String?
+  generatedAt DateTime        @default(now())
+  vendor      Vendor          @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId, type])
+}
+
+model Notification {
+  id            String               @id @default(cuid())
+  recipientId   String
+  actorId       String?
+  type          NotificationType     @default(GENERAL)
+  priority      NotificationPriority @default(NORMAL)
+  title         String
+  body          String?
+  actionUrl     String?
+  entityType    String?
+  entityId      String?
+  metadata      Json?
+  emailTo       String?
+  emailStatus   String?
+  emailFallback Boolean              @default(false)
+  readAt        DateTime?
+  deliveredAt   DateTime?
+  recipient     User                 @relation("UserNotifications", fields: [recipientId], references: [id])
+  actor         User?                @relation("NotificationActor", fields: [actorId], references: [id])
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([recipientId, readAt])
+  @@index([recipientId, createdAt])
+}
+
+model MessageThread {
+  id                 String            @id @default(cuid())
+  type               MessageThreadType @default(GENERAL)
+  title              String
+  customerId         String
+  vendorId           String?
+  weddingId          String?
+  bookingId          String?
+  proposalId         String?
+  disputeId          String?
+  serviceRequestId   String?
+  lastMessageAt      DateTime?
+  customerArchivedAt DateTime?
+  vendorArchivedAt   DateTime?
+  customer           User              @relation("CustomerMessageThreads", fields: [customerId], references: [id])
+  vendor             Vendor?           @relation(fields: [vendorId], references: [id])
+  wedding            Wedding?          @relation(fields: [weddingId], references: [id])
+  booking            Booking?          @relation(fields: [bookingId], references: [id])
+  proposal           Proposal?         @relation(fields: [proposalId], references: [id])
+  dispute            BookingDispute?   @relation(fields: [disputeId], references: [id])
+  messages           Message[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([customerId, lastMessageAt])
+  @@index([vendorId, lastMessageAt])
+  @@index([bookingId])
+  @@index([proposalId])
+  @@index([disputeId])
+  @@index([serviceRequestId])
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  threadId       String
+  senderId       String
+  body           String
+  attachments    String[]      @default([])
+  isSystem       Boolean       @default(false)
+  metadata       Json?
+  customerReadAt DateTime?
+  vendorReadAt   DateTime?
+  thread         MessageThread @relation(fields: [threadId], references: [id])
+  sender         User          @relation(fields: [senderId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([threadId, createdAt])
+  @@index([senderId])
+}
+
+model BookingOperationStatus {
+  id          String                @id @default(cuid())
+  bookingId   String
+  status      VendorOperationStatus
+  note        String?
+  delayReason String?
+  actorId     String?
+  occurredAt  DateTime              @default(now())
+  booking     Booking               @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId, occurredAt])
+  @@index([status])
+}
+
+model ActivityEvent {
+  id         String            @id @default(cuid())
+  actorId    String?
+  weddingId  String?
+  bookingId  String?
+  type       ActivityEventType @default(GENERAL)
+  title      String
+  body       String?
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  actor      User?             @relation("ActivityActor", fields: [actorId], references: [id])
+  wedding    Wedding?          @relation(fields: [weddingId], references: [id])
+  booking    Booking?          @relation(fields: [bookingId], references: [id])
+  createdAt  DateTime          @default(now())
+
+  @@index([weddingId, createdAt])
+  @@index([bookingId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  actorId       String?
+  action        String
+  entityType    String
+  entityId      String?
+  previousValue String?
+  newValue      String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+  actor         User?    @relation(fields: [actorId], references: [id])
+}

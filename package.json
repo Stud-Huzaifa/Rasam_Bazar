@@ -1,0 +1,43 @@
+{
+  "name": "rasmbazaar",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "dev:api": "npm run dev --workspace apps/api",
+    "build": "npm run build --workspace apps/web && npm run build --workspace apps/api",
+    "build:api": "npm run build --workspace apps/api",
+    "build:web": "npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web && npm run lint --workspace apps/api",
+    "typecheck": "npx tsc -p apps/api/tsconfig.json --noEmit && npx tsc -p apps/web/tsconfig.json --noEmit",
+    "test": "npm run test:unit",
+    "test:unit": "npm run test:auth && npm run test:vendor && npm run test:proposals && npm run test:bookings && npm run test:collaboration && npm run test:planner && npm run test:trust",
+    "test:integration": "node tests/integration-critical-workflows.test.cjs",
+    "test:e2e": "playwright test",
+    "test:auth": "node tests/auth-security.test.cjs",
+    "test:bookings": "node tests/booking-payment-budget.test.cjs",
+    "test:collaboration": "node tests/collaboration-operations.test.cjs",
+    "test:planner": "node tests/planner-workflow.test.cjs",
+    "test:trust": "node tests/trust-safety-admin.test.cjs",
+    "test:proposals": "node tests/service-request-proposal.test.cjs",
+    "test:vendor": "node tests/vendor-marketplace.test.cjs",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown .",
+    "prisma:generate": "npm run prisma:generate --workspace apps/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace apps/api",
+    "prisma:format": "npx prisma format --schema prisma/schema.prisma",
+    "prisma:validate": "npx prisma validate --schema prisma/schema.prisma",
+    "prisma:deploy": "npx prisma migrate deploy --schema prisma/schema.prisma",
+    "start:api:prod": "npm run prisma:deploy && npm run start --workspace apps/api",
+    "seed": "node scripts/seed.cjs"
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.3.3"
+  }
+}

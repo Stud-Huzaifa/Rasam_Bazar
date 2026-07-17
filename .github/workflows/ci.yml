@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  quality:
+    name: Install, validate, test, and build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rasmbazaar
+      JWT_ACCESS_SECRET: ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret
+      FRONTEND_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      ENABLE_SWAGGER: 'false'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rasmbazaar
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rasmbazaar"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Dependency installation
+        run: npm ci
+
+      - name: Prisma format
+        run: npm run prisma:format
+
+      - name: Prisma validation
+        run: npm run prisma:validate
+
+      - name: Type checking
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Frontend build
+        run: npm run build:web
+
+      - name: Backend build
+        run: npm run build:api
+
+      - name: Docker build frontend
+        run: docker build -f apps/web/Dockerfile -t rasmbazaar-web:test .
+
+      - name: Docker build backend
+        run: docker build -f apps/api/Dockerfile -t rasmbazaar-api:test .
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+      - name: Trivy frontend image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: rasmbazaar-web:test
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Trivy backend image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: rasmbazaar-api:test
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
