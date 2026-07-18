@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getJson } from '../lib/api';
+import { demoWeddings } from '../lib/demo-session';
 
 const modules = [
   { title: 'Overview', href: '' },
@@ -60,7 +61,10 @@ export function PlannerShell({
         }
       } catch {
         if (isActive) {
-          setWedding(null);
+          setWedding(
+            demoWeddings.find((item) => item.id === weddingId) ??
+              (weddingId === 'demo123' ? demoWeddings[0] : null),
+          );
         }
       }
     }
