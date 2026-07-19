@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getJson, postJson } from '../../lib/api';
-import { getDemoVendor } from '../../lib/demo-data';
 
 export default function VendorPublicProfilePage({
   params,
@@ -29,18 +28,12 @@ export default function VendorPublicProfilePage({
     async function loadVendor() {
       try {
         setVendor(await getJson(`/vendors/${params.vendorId}`));
+        setError('');
       } catch (err) {
-        const fallbackVendor = getDemoVendor(params.vendorId);
-        if (fallbackVendor) {
-          setVendor(fallbackVendor);
-          setError('');
-        } else {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Could not load vendor profile',
-          );
-        }
+        setVendor(null);
+        setError(
+          err instanceof Error ? err.message : 'Could not load vendor profile',
+        );
       } finally {
         setLoading(false);
       }

@@ -10,7 +10,7 @@ This project is deployment-prepared, but it is still an academic MVP. Do not cla
 - Unit workflow tests
 - Integration workflow tests
 - Frontend and backend builds
-- Public preview pages and demo fallbacks
+- Public preview pages and seeded demo account flows
 
 ## Not Fully Verified Locally
 
@@ -25,5 +25,5 @@ This project is deployment-prepared, but it is still an academic MVP. Do not cla
 - Real payment gateways are intentionally not integrated.
 - File upload provider integration is prepared through configuration/docs, but provider-specific upload signing still requires final credential verification.
 - Email provider fallback exists conceptually, but real delivery requires Resend domain/sender setup.
-- Demo-login fallback is for local preview only; real deployment should rely on backend auth and seeded database accounts.
+- Demo accounts rely on backend auth and seeded database records; run `npm run seed` after migrations in demo environments.
 - Token storage should be hardened with secure cookies before a commercial launch.

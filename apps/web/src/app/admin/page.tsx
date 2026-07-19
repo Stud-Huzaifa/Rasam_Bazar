@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { getJson, patchJson } from '../lib/api';
-import { getDemoAdminData } from '../lib/demo-session';
 
 const sidebarGroups = [
   {
@@ -273,22 +272,25 @@ export default function AdminPage() {
       setSavedViewsData(Array.isArray(savedViewData) ? savedViewData : []);
       setError('');
     } catch (err) {
-      const demo = getDemoAdminData();
-      setDashboard(demo.dashboard);
-      setUsers(demo.users);
-      setVendors(demo.vendors);
-      setVerifications(demo.verifications);
-      setCategories(demo.categories);
-      setListings(demo.listings);
-      setBookings(demo.bookings);
-      setPayments(demo.payments);
-      setReviews(demo.reviews);
-      setIncidents(demo.incidents);
-      setDisputes(demo.disputes);
-      setAuditLogs(demo.auditLogs);
-      setReports(demo.reports);
-      setSavedViewsData(demo.savedViews);
-      setError('');
+      setDashboard(null);
+      setUsers([]);
+      setVendors([]);
+      setVerifications([]);
+      setCategories([]);
+      setListings([]);
+      setBookings([]);
+      setPayments([]);
+      setReviews([]);
+      setIncidents([]);
+      setDisputes([]);
+      setAuditLogs([]);
+      setReports(null);
+      setSavedViewsData([]);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not load admin dashboard data.',
+      );
     } finally {
       setLoading(false);
     }

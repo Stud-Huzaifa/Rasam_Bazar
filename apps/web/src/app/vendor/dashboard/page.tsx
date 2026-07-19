@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { VendorShell } from '../../components/vendor-shell';
 import { getJson } from '../../lib/api';
-import { demoVendorDashboard } from '../../lib/demo-session';
 
 type Dashboard = {
   vendor?: any;
@@ -22,9 +21,14 @@ export default function VendorDashboardPage() {
       try {
         const data = await getJson('/vendors/me/dashboard');
         setDashboard(data);
-      } catch (err) {
-        setDashboard(demoVendorDashboard);
         setError('');
+      } catch (err) {
+        setDashboard(null);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load vendor dashboard.',
+        );
       } finally {
         setLoading(false);
       }

@@ -3,19 +3,25 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getJson } from '../lib/api';
-import { demoCategories } from '../lib/demo-data';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function loadCategories() {
       try {
         const data = await getJson('/categories');
         setCategories(Array.isArray(data) ? data : []);
-      } catch {
-        setCategories(demoCategories);
+        setError('');
+      } catch (err) {
+        setCategories([]);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load service categories.',
+        );
       } finally {
         setLoading(false);
       }
@@ -50,6 +56,7 @@ export default function CategoriesPage() {
         {loading ? (
           <p className="mt-8 text-sm text-slate-400">Loading categories...</p>
         ) : null}
+        {error ? <p className="mt-8 text-sm text-rose-300">{error}</p> : null}
 
         <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {categories.map((category) => (

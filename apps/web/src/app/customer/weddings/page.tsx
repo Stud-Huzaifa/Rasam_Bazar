@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getJson } from '../../lib/api';
-import { demoWeddings } from '../../lib/demo-session';
 
 type Wedding = {
   id: string;
@@ -48,8 +47,12 @@ export default function WeddingsPage() {
         }
       } catch (err) {
         if (isActive) {
-          setWeddings(demoWeddings);
-          setError('');
+          setWeddings([]);
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Could not load wedding data. Please try again.',
+          );
         }
       } finally {
         if (isActive) {

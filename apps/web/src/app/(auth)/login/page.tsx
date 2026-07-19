@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { postJson, saveAuthTokens } from '../../lib/api';
-import { demoLogin } from '../../lib/demo-session';
 
 function redirectForRoles(roles: string[] = []) {
   if (roles.includes('ADMIN') || roles.includes('SUPPORT_OFFICER')) {
@@ -35,14 +34,6 @@ export default function LoginPage() {
       setMessage(`Signed in as ${data.user?.email || 'user'}`);
       router.push(redirectForRoles(data.user?.roles));
     } catch (error) {
-      const demo = demoLogin(email, password);
-      if (demo) {
-        saveAuthTokens(demo.accessToken, demo.refreshToken);
-        setMessage(`Signed in as ${demo.user.email}`);
-        router.push(demo.redirect);
-        return;
-      }
-
       setMessage(error instanceof Error ? error.message : 'Login failed');
     } finally {
       setIsSubmitting(false);

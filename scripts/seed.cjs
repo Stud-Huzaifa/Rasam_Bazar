@@ -524,7 +524,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       id: 'demo-admin-user',
-      email: 'admin@rasmbazaar.test',
+      email: 'admin@rasmbazaar.demo',
       passwordHash,
       fullName: 'Demo Admin',
       phone: '+920000000001',
@@ -548,8 +548,8 @@ async function main() {
         id: `demo-customer-${i + 1}`,
         email:
           i === 0
-            ? 'customer@rasmbazaar.test'
-            : `customer${i + 1}@rasmbazaar.test`,
+            ? 'customer@rasmbazaar.demo'
+            : `customer${i + 1}@rasmbazaar.demo`,
         passwordHash,
         fullName,
         phone: `+9200001${String(i + 1).padStart(5, '0')}`,
@@ -579,8 +579,8 @@ async function main() {
           id: `demo-vendor-user-${vendorIndex + 1}`,
           email:
             vendorIndex === 0
-              ? 'vendor@rasmbazaar.test'
-              : `vendor${vendorIndex + 1}@rasmbazaar.test`,
+              ? 'vendor@rasmbazaar.demo'
+              : `vendor${vendorIndex + 1}@rasmbazaar.demo`,
           passwordHash,
           fullName: ownerName,
           phone: `+9200002${String(vendorIndex + 1).padStart(5, '0')}`,

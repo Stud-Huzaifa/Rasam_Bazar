@@ -138,9 +138,9 @@ Password123!
 
 Seeded accounts:
 
-- `admin@rasmbazaar.test`
-- `customer@rasmbazaar.test`
-- `vendor@rasmbazaar.test`
+- `admin@rasmbazaar.demo`
+- `customer@rasmbazaar.demo`
+- `vendor@rasmbazaar.demo`
 
 The seed script generates a large fictional dataset:
 

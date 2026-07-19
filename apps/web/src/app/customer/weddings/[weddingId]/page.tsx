@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PlannerShell } from '../../../components/planner-shell';
 import { deleteJson, getJson, patchJson } from '../../../lib/api';
-import { demoWeddings } from '../../../lib/demo-session';
 
 type Wedding = {
   title?: string;
@@ -97,13 +96,6 @@ function formatDate(date?: string | null) {
   });
 }
 
-function getDemoWedding(weddingId: string) {
-  return (
-    demoWeddings.find((item) => item.id === weddingId) ??
-    (weddingId === 'demo123' ? demoWeddings[0] : null)
-  );
-}
-
 export default function WeddingDashboardPage({
   params,
 }: {
@@ -159,35 +151,6 @@ export default function WeddingDashboardPage({
         }
       } catch (err) {
         if (isActive) {
-          const demoWedding = getDemoWedding(params.weddingId);
-          if (demoWedding) {
-            setWedding(demoWedding);
-            setForm({
-              title: demoWedding.title,
-              brideName: demoWedding.brideName || '',
-              groomName: demoWedding.groomName || '',
-              city: demoWedding.city || '',
-              startDate: demoWedding.startDate
-                ? demoWedding.startDate.slice(0, 10)
-                : '',
-            });
-            setGuests([
-              { status: 'CONFIRMED' },
-              { status: 'CONFIRMED' },
-              { status: 'PENDING' },
-            ]);
-            setBudgetItems([
-              { amount: 750000, isPaid: true },
-              { amount: 1250000, isPaid: false },
-            ]);
-            setTasks([
-              { status: 'COMPLETED', isCompleted: true },
-              { status: 'IN_PROGRESS', isCompleted: false },
-              { status: 'OPEN', isCompleted: false },
-            ]);
-            setError('');
-            return;
-          }
           setError(
             err instanceof Error
               ? err.message

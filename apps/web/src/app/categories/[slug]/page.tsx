@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getJson } from '../../lib/api';
-import { getDemoCategoryDetail } from '../../lib/demo-data';
 
 export default function CategoryDetailPage({
   params,
@@ -29,8 +28,12 @@ export default function CategoryDetailPage({
         }
       } catch (err) {
         if (isActive) {
-          setData(getDemoCategoryDetail(params.slug, city));
-          setError('');
+          setData(null);
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Could not load category vendors.',
+          );
         }
       } finally {
         if (isActive) {

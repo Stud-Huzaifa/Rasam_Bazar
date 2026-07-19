@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { getJson } from '../lib/api';
-import { demoCategories, filterDemoVendors } from '../lib/demo-data';
 
 type Category = {
   id: string;
@@ -96,8 +95,13 @@ export default function MarketplacePage() {
       try {
         const data = await getJson('/categories');
         setCategories(Array.isArray(data) ? data : []);
-      } catch {
-        setCategories(demoCategories);
+      } catch (err) {
+        setCategories([]);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load service categories.',
+        );
       }
     }
 
@@ -119,11 +123,12 @@ export default function MarketplacePage() {
         }
       } catch (err) {
         if (isActive) {
-          setVendors(filterDemoVendors(debouncedFilters));
-          setCategories((current) =>
-            current.length ? current : demoCategories,
+          setVendors([]);
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Could not load vendors. Please try again.',
           );
-          setError('');
         }
       } finally {
         if (isActive) {
