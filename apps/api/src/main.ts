@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { AppModule } from './app.module';
+import { ApiExceptionFilter } from './common/filters/api-exception.filter';
+import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 
 function loadRootEnv() {
   const envPath = resolve(process.cwd(), '../../.env');
@@ -59,6 +61,13 @@ function validateEnvironment() {
 
 validateEnvironment();
 
+function configuredFrontendOrigins() {
+  return (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+}
+
 const authRateLimitHits = new Map<string, { count: number; resetAt: number }>();
 
 function authRateLimiter(windowMs = 60_000, max = 20) {
@@ -99,15 +108,11 @@ async function bootstrap() {
     }),
   );
   app.use(authRateLimiter());
-  const frontendUrl =
-    process.env.FRONTEND_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:3000';
+  const frontendOrigins = configuredFrontendOrigins();
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? frontendUrl.split(',').map((origin) => origin.trim())
-        : true,
+    origin: process.env.NODE_ENV === 'production' ? frontendOrigins : true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
   app.use((_: any, res: any, next: any) => {
@@ -128,6 +133,8 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+  app.useGlobalFilters(new ApiExceptionFilter());
+  app.useGlobalInterceptors(new ApiResponseInterceptor());
 
   const swaggerEnabled =
     process.env.ENABLE_SWAGGER === 'true' ||

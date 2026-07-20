@@ -3,6 +3,8 @@ const DEFAULT_API_URL = 'http://localhost:3001/api';
 const configuredApiUrl = (
   process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL
 ).replace(/\/+$/, '');
+const DEFAULT_TIMEOUT_MS = 20_000;
+let refreshPromise: Promise<boolean> | null = null;
 
 export const API_ROOT = configuredApiUrl.endsWith('/api')
   ? configuredApiUrl
@@ -78,6 +80,33 @@ function buildUrl(
   return url.toString();
 }
 
+function createTimeoutSignal(timeoutMs: number, signal?: AbortSignal | null) {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => {
+    controller.abort(new Error(`Request timed out after ${timeoutMs}ms`));
+  }, timeoutMs);
+
+  function abortFromCaller() {
+    controller.abort(signal?.reason);
+  }
+
+  if (signal) {
+    if (signal.aborted) {
+      abortFromCaller();
+    } else {
+      signal.addEventListener('abort', abortFromCaller, { once: true });
+    }
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      globalThis.clearTimeout(timeoutId);
+      signal?.removeEventListener('abort', abortFromCaller);
+    },
+  };
+}
+
 function readErrorMessage(data: unknown, fallback: string) {
   if (data && typeof data === 'object') {
     const record = data as Record<string, unknown>;
@@ -111,38 +140,49 @@ async function parseResponse(response: Response) {
 }
 
 async function refreshAccessToken() {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
     return false;
   }
 
-  const response = await fetch(buildUrl('/auth/refresh'), {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
-  }).catch(() => null);
+  refreshPromise = (async () => {
+    const response = await fetch(buildUrl('/auth/refresh'), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    }).catch(() => null);
 
-  if (!response?.ok) {
-    clearAuthTokens();
-    return false;
-  }
+    if (!response?.ok) {
+      clearAuthTokens();
+      return false;
+    }
 
-  const data = await parseResponse(response);
-  const record = data as Record<string, string | undefined>;
-  if (!record?.accessToken) {
-    clearAuthTokens();
-    return false;
-  }
+    const data = await parseResponse(response);
+    const record = data as Record<string, string | undefined>;
+    if (!record?.accessToken) {
+      clearAuthTokens();
+      return false;
+    }
 
-  saveAuthTokens(record.accessToken, record.refreshToken);
-  return true;
+    saveAuthTokens(record.accessToken, record.refreshToken);
+    return true;
+  })().finally(() => {
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
 }
 
 async function requestJson<T = any>(
   path: string,
   init: RequestInit = {},
   retryOnUnauthorized = true,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
 ): Promise<T> {
   const token = getAuthToken();
   const headers = new Headers(init.headers || {});
@@ -158,18 +198,24 @@ async function requestJson<T = any>(
   }
 
   let response: Response;
+  const { signal, cleanup } = createTimeoutSignal(timeoutMs, init.signal);
   try {
     response = await fetch(buildUrl(path), {
       ...init,
       credentials: 'include',
       headers,
+      signal,
     });
   } catch (error) {
     throw new ApiError(
-      `Network error: could not reach the RasmBazaar API at ${API_ROOT}`,
+      error instanceof DOMException && error.name === 'AbortError'
+        ? `Request timed out while contacting the RasmBazaar API at ${API_ROOT}`
+        : `Network error: could not reach the RasmBazaar API at ${API_ROOT}`,
       0,
       error,
     );
+  } finally {
+    cleanup();
   }
 
   if (
@@ -202,9 +248,15 @@ async function requestJson<T = any>(
 export async function getJson<T = any>(
   path: string,
   query?: Record<string, string | number | boolean | null | undefined>,
+  options: { signal?: AbortSignal; timeoutMs?: number } = {},
 ) {
   const fullPath = query ? buildUrl(path, query).replace(API_ROOT, '') : path;
-  return requestJson<T>(fullPath, { method: 'GET' });
+  return requestJson<T>(
+    fullPath,
+    { method: 'GET', signal: options.signal },
+    true,
+    options.timeoutMs,
+  );
 }
 
 export async function postJson<T = any>(path: string, body?: JsonBody) {
@@ -228,6 +280,22 @@ export async function patchJson<T = any>(path: string, body?: JsonBody) {
   });
 }
 
+export async function putJson<T = any>(path: string, body?: JsonBody) {
+  return requestJson<T>(path, {
+    method: 'PUT',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
 export async function deleteJson<T = any>(path: string) {
   return requestJson<T>(path, { method: 'DELETE' });
 }
+
+export const api = {
+  get: getJson,
+  post: postJson,
+  patch: patchJson,
+  put: putJson,
+  delete: deleteJson,
+  postForm,
+};
